@@ -2,137 +2,44 @@
 
 namespace App\Controller;
 
+use App\Entity\Order;
 use App\Entity\PaymentValidationRequest;
-use App\Service\CreditCardValidator;
-use DateTime;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\OrderService;
+use App\Service\PaymentService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class PaymentController extends AbstractController
 {
-    private EntityManagerInterface $em;
-
-    public function __construct(
-        EntityManagerInterface $em
-    ) {
-        $this->em = $em;
-    }
-
     /**
      * Mocked 3D secure. It parses a POST request and saves the info in database
      *
      * @Route("/3dsecure_register", name="3dsecure_register", methods={"POST"})
      */
-    public function mocked3dSecureRegister(Request $request): JsonResponse
+    public function mocked3dSecureRegister(
+        Request $request,
+        PaymentService $paymentService
+    ): JsonResponse
     {
-        $feedback = [
-            'status' => false,
-            'message' => ''
-        ];
+        $feedback = $paymentService->validatePaymentRequest(
+            $request->request->get('merchant'),
+            $request->request->get('amount'),
+            $request->request->get('currency'),
+            $request->request->get('creditCardName'),
+            $request->request->get('creditCardNumber'),
+            $request->request->get('creditCardExpiration'),
+            $request->request->get('creditCardCvv'),
+            $request->request->get('orderId'),
+            $request->request->get('token'),
+            $request->request->get('feedbackUrl'),
+            $request->request->get('backTo'),
 
-        $merchant = $request->request->get('merchant');
-        $amount = $request->request->get('amount');
-        $currency = $request->request->get('currency');
-        $creditCardName = $request->request->get('creditCardName');
-        $creditCardNumber = $request->request->get('creditCardNumber');
-        $creditCardCvv = $request->request->get('creditCardCvv');
-        $orderId = (int)$request->request->get('orderId');
-        $token = $request->request->get('token');
-        $feedbackUrl = $request->request->get('feedbackUrl');
-        $backTo = $request->request->get('backTo');
-
-        try {
-            $creditCardExpiration = !empty($request->request->get('creditCardExpiration')) ?
-                new DateTime('01/' . $request->request->get('creditCardExpiration')) :
-                null
-            ;
-        } catch (Exception $e) {
-            $creditCardExpiration = null;
-        }
-
-        if (empty($merchant)) {
-            $feedback['message'] = 'Invalid merchant name.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($amount)) {
-            $feedback['message'] = 'Invalid amount.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($currency)) {
-            $feedback['message'] = 'Invalid currency.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($creditCardName)) {
-            $feedback['message'] = 'Invalid credit card name.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($creditCardNumber)) {
-            $feedback['message'] = 'Invalid credit card number.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($creditCardExpiration)) {
-            $feedback['message'] = 'Invalid expiration date.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($creditCardCvv)) {
-            $feedback['message'] = 'Invalid CVV.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($token) || strlen($token) < 32) {
-            $feedback['message'] = 'Invalid token.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($feedbackUrl)) {
-            $feedback['message'] = 'Invalid feedback URL.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($backTo)) {
-            $feedback['message'] = 'Invalid back to data.';
-            return new JsonResponse($feedback);
-        }
-
-        // Validate credit card data
-        if (!CreditCardValidator::validateCreditCard($creditCardNumber, $creditCardExpiration)) {
-            $feedback['message'] = 'Credit card invalid.';
-            return new JsonResponse($feedback);
-        }
-
-        $parsedCcNumber = str_repeat('X', strlen($creditCardNumber) - 4) . substr($creditCardNumber, -4);
-
-        // Save 3dSecure request
-        $paymentValidationRequest = new PaymentValidationRequest();
-        $paymentValidationRequest->setMerchant($merchant);
-        $paymentValidationRequest->setAmount($amount);
-        $paymentValidationRequest->setCurrency($currency);
-        $paymentValidationRequest->setCreditCardName($creditCardName);
-        $paymentValidationRequest->setCreditCardNumber($parsedCcNumber);
-        $paymentValidationRequest->setOrderId($orderId);
-        $paymentValidationRequest->setToken($token);
-        $paymentValidationRequest->setFeedbackUrl($feedbackUrl);
-        $paymentValidationRequest->setBackTo($backTo);
-
-        $this->em->persist($paymentValidationRequest);
-        $this->em->flush();
-
-        $feedback['status'] = true;
-        $feedback['message'] = 'Request saved successfully.';
-        $feedback['id'] = $paymentValidationRequest->getId();
+        );
 
         return new JsonResponse($feedback);
     }
@@ -145,13 +52,18 @@ class PaymentController extends AbstractController
     public function mocked3dSecure(
         PaymentValidationRequest $paymentValidationRequest,
         Request $request,
-        HttpClientInterface $client
+        HttpClientInterface $client,
+        OrderService $orderService
     ): Response
     {
         // Parse 3d Secure password
         if ($request->request->get('password')) {
+
             try {
-                $feedbackRequest = $client->request(
+                /**
+                 * Disable HTTP request implementation because it requires a public IP
+                 */
+                /*$feedbackRequest = $client->request(
                     'POST',
                     base64_decode($paymentValidationRequest->getFeedbackUrl()),
                     [
@@ -163,7 +75,13 @@ class PaymentController extends AbstractController
                     ]
                 );
 
-                $feedback = $feedbackRequest->toArray();
+                $feedback = $feedbackRequest->toArray();*/
+
+                $feedback = $orderService->setOrderStatus(
+                    $paymentValidationRequest->getOrderId(),
+                    $paymentValidationRequest->getToken(),
+                    1
+                );
 
                 if (!empty($feedback['status'])) {
                     return $this->redirect(base64_decode($paymentValidationRequest->getBackTo()));
@@ -171,6 +89,8 @@ class PaymentController extends AbstractController
             } catch (Exception $e) {
                 // TODO :: ...
             }
+
+
         }
 
         return $this->render('site/payment/3dsecure.html.twig', [

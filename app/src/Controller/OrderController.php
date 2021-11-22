@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Order;
+use App\Service\OrderService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,44 +33,16 @@ class OrderController extends AbstractController
     /**
      * @Route("/order/set_status", name="set_order_status", methods={"POST"})
      */
-    public function setOrderStatus(Request $request): JsonResponse
+    public function setOrderStatus(
+        Request $request,
+        OrderService $orderService
+    ): JsonResponse
     {
-        $feedback = [
-            'status' => false,
-            'message' => ''
-        ];
-
-        $orderId = (int)$request->request->get('order_id');
-        $token = $request->request->get('token');
-        $status = (int)$request->request->get('status');
-
-        if (!$orderId) {
-            $feedback['message'] = 'Invalid order ID.';
-            return new JsonResponse($feedback);
-        }
-
-        if (empty($token) || strlen($token) < 32) {
-            $feedback['message'] = 'Invalid token.';
-            return new JsonResponse($feedback);
-        }
-
-        $order = $this->em->getRepository(Order::class)->find($orderId);
-
-        if (!$order) {
-            $feedback['message'] = 'Invalid order data.';
-            return new JsonResponse($feedback);
-        }
-
-        if ($order->getToken() !== $token) {
-            $feedback['message'] = 'Invalid token.';
-            return new JsonResponse($feedback);
-        }
-
-        $order->setPaymentStatus($status);
-        $this->em->persist($order);
-        $this->em->flush();
-
-        $feedback['status'] = true;
+        $feedback = $orderService->setOrderStatus(
+            (int)$request->request->get('order_id'),
+            $request->request->get('token'),
+            (int)$request->request->get('status')
+        );
 
         return new JsonResponse($feedback);
     }

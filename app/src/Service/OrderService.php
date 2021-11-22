@@ -13,11 +13,14 @@ use App\Entity\OrderPaymentType;
 use App\Entity\OrderProduct;
 use App\Entity\Product;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class OrderService
@@ -37,19 +40,22 @@ class OrderService
     private UrlGeneratorInterface $router;
     private ShoppingCartService $shoppingCartService;
     private SessionInterface $session;
+    private PaymentService $paymentService;
 
     public function __construct(
         EntityManagerInterface $em,
         HttpClientInterface $client,
         UrlGeneratorInterface $router,
         ShoppingCartService $shoppingCartService,
-        RequestStack $requestStack
+        RequestStack $requestStack,
+        PaymentService $paymentService
     ) {
         $this->em = $em;
         $this->client = $client;
         $this->router = $router;
         $this->shoppingCartService = $shoppingCartService;
         $this->session = $requestStack->getSession();
+        $this->paymentService = $paymentService;
     }
 
     /**
@@ -150,7 +156,11 @@ class OrderService
 
         if ($order->getPaymentType()->getId() === self::CREDIT_CARD_PAYMENT_TYPE_ID) {
             try {
-                $ccValidationRequest = $this->client->request(
+
+                /**
+                 * Disable HTTP request implementation because it requires a public IP
+                 */
+                /*$ccValidationRequest = $this->client->request(
                     'POST',
                     $this->router->generate('3dsecure_register', [], UrlGeneratorInterface::ABSOLUTE_URL),
                     [
@@ -170,7 +180,21 @@ class OrderService
                     ]
                 );
 
-                $feedback = $ccValidationRequest->toArray();
+                $feedback = $ccValidationRequest->toArray();*/
+
+                $feedback = $this->paymentService->validatePaymentRequest(
+                    'Wristwatch Store',
+                    $order->getTotal(),
+                    $order->getCurrency()->getName(),
+                    $form->get('creditCardName')->getData(),
+                    $form->get('creditCardNumber')->getData(),
+                    $form->get('creditCardExpiration')->getData(),
+                    $form->get('creditCardCvv')->getData(),
+                    $order->getId(),
+                    $order->getToken(),
+                    base64_encode($this->router->generate('set_order_status', [], UrlGeneratorInterface::ABSOLUTE_URL)),
+                    base64_encode($this->router->generate('shopping_cart_feedback', [], UrlGeneratorInterface::ABSOLUTE_URL))
+                );
 
                 if (empty($feedback['status'])) {
                     // Set order payment status as failed
@@ -186,7 +210,7 @@ class OrderService
                         UrlGeneratorInterface::ABSOLUTE_URL
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (Exception | TransportExceptionInterface | DecodingExceptionInterface $e) {
                 // TODO :: ...
             }
         }
@@ -213,5 +237,55 @@ class OrderService
     public function saveLatestOrder(Order $order)
     {
         return $this->session->set(self::LATEST_ORDER_KEYWORD, $order->getId());
+    }
+
+    /**
+     * Set order status
+     *
+     * @param int $orderId
+     * @param string $token
+     * @param int $status
+     * @return array
+     */
+    public function setOrderStatus(
+        int $orderId,
+        string $token,
+        int $status
+    ): array
+    {
+        $feedback = [
+            'status' => false,
+            'message' => ''
+        ];
+
+        if (!$orderId) {
+            $feedback['message'] = 'Invalid order ID.';
+            return $feedback;
+        }
+
+        if (empty($token) || strlen($token) < 32) {
+            $feedback['message'] = 'Invalid token.';
+            return $feedback;
+        }
+
+        $order = $this->em->getRepository(Order::class)->find($orderId);
+
+        if (!$order) {
+            $feedback['message'] = 'Invalid order data.';
+            return $feedback;
+        }
+
+        if ($order->getToken() !== $token) {
+            $feedback['message'] = 'Invalid token.';
+            return $feedback;
+        }
+
+        $order->setPaymentStatus($status);
+        $this->em->persist($order);
+        $this->em->flush();
+
+        $feedback['status'] = true;
+
+        return $feedback;
     }
 }
