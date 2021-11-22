@@ -1,0 +1,72 @@
+{% extends 'site/base.html.twig' %}
+
+{% block title %}{{ 'Home' | trans }}{% endblock %}
+
+{% block body %}
+    <div id="template-mo-zay-hero-carousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="container">
+                    <div class="row p-5">
+                        <div class="mx-auto col-md-8 col-lg-6 order-lg-last">
+                            <img class="img-fluid" src="{{ asset('media/img/banner.png') }}" alt="">
+                        </div>
+                        <div class="col-lg-6 mb-0 d-flex align-items-center">
+                            <div class="text-align-left align-self-center">
+                                <h1 class="h1 text-success"><b>Wristwatch</b> Store</h1>
+                                <h3 class="h2">{{ 'home.best_wristwatches_motto' | trans }}</h3>
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                                    incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                                    exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+                                    irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="container py-5">
+        <div class="row text-center pt-3">
+            <div class="col-lg-6 m-auto">
+                <h1 class="h1">{{ 'home.categories_of_the_month' | trans }}</h1>
+                <p>
+                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
+                    deserunt mollit anim id est laborum.
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-md-4 p-5 mt-3">
+                <a href="{{ path('product_list') }}">
+                    <img src="{{ asset('media/img/category/category_img_01.jpg') }}"
+                         class="rounded-circle img-fluid border"
+                    >
+                </a>
+                <h5 class="text-center mt-3 mb-3">{{ 'home.smart_watches' | trans }}</h5>
+                <p class="text-center"><a class="btn btn-success">{{ 'home.view_watches' | trans }}</a></p>
+            </div>
+            <div class="col-12 col-md-4 p-5 mt-3">
+                <a href="{{ path('product_list') }}">
+                    <img src="{{ asset('media/img/category/category_img_02.jpg') }}"
+                         class="rounded-circle img-fluid border"
+                    >
+                </a>
+                <h2 class="h5 text-center mt-3 mb-3">{{ 'home.sport_watches' | trans }}</h2>
+                <p class="text-center"><a class="btn btn-success">{{ 'home.view_watches' | trans }}</a></p>
+            </div>
+            <div class="col-12 col-md-4 p-5 mt-3">
+                <a href="{{ path('product_list') }}">
+                    <img src="{{ asset('media/img/category/category_img_03.jpg') }}"
+                         class="rounded-circle img-fluid border"
+                    >
+                </a>
+                <h2 class="h5 text-center mt-3 mb-3">{{ 'home.casual_watches' | trans }}</h2>
+                <p class="text-center"><a class="btn btn-success">{{ 'home.view_watches' | trans }}</a></p>
+            </div>
+        </div>
+    </section>
+{% endblock %}

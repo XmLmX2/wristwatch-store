@@ -1,0 +1,111 @@
+{% if products is empty %}
+    <div class="alert alert-warning text-center">
+        <h3>{{ 'shopping_cart.empty_title' | trans }}</h3>
+        <p>{{ 'shopping_cart.empty_subtitle' | trans }}</p>
+
+        <a href="{{ path('product_list') }}" class="btn btn-secondary m-3">
+            {{ 'shopping_cart.continue_shopping' | trans }}
+        </a>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="table-responsive">
+                <table class="table products-table">
+                    <thead>
+                    <tr>
+                        <th colspan="2">{{ 'Product' | trans }}</th>
+                        <th>{{ 'Brand' | trans }}</th>
+                        <th>{{ 'Quantity' | trans }}</th>
+                        <th>{{ 'Price' | trans }}</th>
+                        <th class="text-nowrap">{{ 'shopping_cart.price_without_vat' | trans }}</th>
+                        <th class="text-nowrap">{{ 'shopping_cart.vat_value' | trans }}</th>
+                    </tr>
+                    </thead>
+
+                    <tbody class="products">
+                        {% for product in products %}
+                            <tr>
+                                <td>
+                                    <img src="{{ asset('uploads/product_images/' ~ product.getMainProductImage.name) }}"
+                                         alt="Product image" class="img-thumbnail"
+                                    >
+                                </td>
+                                <td>
+                                    <a href="{{ path('product', {'product': product.id}) }}"
+                                       class="text-decoration-none product-name">{{ product.name }}</a>
+                                </td>
+                                <td>{{ product.brand.name }}</td>
+                                <td>
+                                    <ul class="quantity-input-wrapper list-inline m-0 text-nowrap">
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+
+
+                                        <li class="list-inline-item">
+                                            <span class="btn btn-success btn-minus">-</span>
+                                        </li>
+
+                                        <li class="list-inline-item">
+                                            <input type="hidden" name="products[{{ product.id }}][price]"
+                                                   value="{{ product.price }}">
+                                            <input type="hidden" name="products[{{ product.id }}][currency]"
+                                                   value="{{ product.currency.id }}">
+
+                                            <input type="text" name="products[{{ product.id }}][quantity]"
+                                                   value="{{ product.shoppingCartQuantity }}"
+                                                   class="quantity-input badge bg-secondary"
+                                            >
+                                        </li>
+
+                                        <li class="list-inline-item">
+                                            <span class="btn btn-success btn-plus">+</span>
+                                        </li>
+                                    </ul>
+                                </td>
+                                <td class="text-nowrap">{{ product.price }} {{ product.currency.name }}</td>
+                                <td class="text-nowrap">
+                                    {{ product.priceWithoutVat }} {{ product.currency.name }}
+                                </td>
+                                <td class="text-nowrap">{{ product.vatValue }} {{ product.currency.name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card total">
+                <div class="card-header">{{ 'Total' | trans }}</div>
+
+                <ul class="list-group list-group-flush text-end">
+                    <li class="list-group-item px-2">
+                        <span>{{ 'shopping_cart.products_cost' | trans }}:</span>
+                        <span class="text-end">{{ total.products_cost }} {{ total.currency }}</span>
+                    </li>
+
+                    <li class="list-group-item px-2">
+                        <span>{{ 'shopping_cart.products_cost_without_vat' | trans }}:</span>
+                        <span class="text-end">{{ total.products_cost_without_vat }} {{ total.currency }}</span>
+                    </li>
+
+                    <li class="list-group-item px-2">
+                        <span>{{ 'shopping_cart.vat_value' | trans }}:</span>
+                        <span class="text-end">{{ total.vat_value }} {{ total.currency }}</span>
+                    </li>
+
+                    <li class="list-group-item px-2">
+                        <span>{{ 'shopping_cart.delivery_cost' | trans }}:</span>
+                        <span class="text-end">{{ total.delivery_cost }} {{ total.currency }}</span>
+                    </li>
+
+                    <li class="list-group-item px-2">
+                        <span>{{ 'shopping_cart.total' | trans }}:</span>
+                        <span class="text-end">{{ total.total }} {{ total.currency }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endif %}
+

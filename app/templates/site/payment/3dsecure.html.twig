@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>3D Secure</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('media/img/favicon.ico') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+
+    {% block stylesheets %}
+        {{ encore_entry_link_tags('site') }}
+    {% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 offset-lg-3 my-5">
+                {% if payment.isExpired %}
+                    <div class="alert alert-warning">The request has expired.</div>
+                {% else %}
+                    <form method="post" action="">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center p-3">
+                                <div class="verified">
+                                    <img src="{{ asset('media/img/verified-by-visa.png') }}" alt="Verified by Visa">
+                                </div>
+
+                                <div class="flex-fill text-end">
+                                    <img src="{{ asset('media/img/raiffeisen-bank.png') }}" alt="Raiffeisen Bank">
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <p class="fs-6">Please submit your Verified by Visa password.</p>
+
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <span class="fw-bold">Merchant:</span>
+                                        <span>{{ payment.merchant }}</span>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span class="fw-bold">Amount:</span>
+                                        <span>{{ payment.amount }} {{ payment.currency }}</span>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span class="fw-bold">Date:</span>
+                                        <span>{{ payment.createdAt | date('d-m-Y') }}</span>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span class="fw-bold">Card number:</span>
+                                        <span>{{ payment.creditCardNumber }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <span class="fw-bold me-2">Password:</span>
+                                        <span>
+                                            <input type="text" name="password" class="form-control w-auto">
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="card-footer text-center py-3">
+                                <button type="submit" class="btn btn-secondary btn-lg">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

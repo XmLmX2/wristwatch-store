@@ -1,0 +1,54 @@
+{% extends 'site/base.html.twig' %}
+
+{% block title %}{{ 'Shopping cart' | trans }}{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('site/shopping_cart') }}
+{% endblock %}
+
+{% block body %}
+    <div class="container py-5 mx-auto shopping-cart">
+        {% if products is not empty %}
+            {{ form_start(orderForm) }}
+        {% endif %}
+
+        <div id="shopping-cart">
+            {% include 'site/shopping_cart/snippets/shopping_cart.html.twig' %}
+        </div>
+
+        {% if products is not empty %}
+            <div id="order-form" class="col-md-7 col-lg-8 mt-5">
+                <h4 class="mb-3">{{ 'shopping_cart.send_order' | trans }}</h4>
+
+                <div class="row g-3">
+                    {{ form_row(orderForm.firstName) }}
+                    {{ form_row(orderForm.lastName) }}
+                    {{ form_row(orderForm.email) }}
+                    {{ form_row(orderForm.address) }}
+                </div>
+
+                <hr class="my-4">
+
+                <h4 class="mb-3">{{ 'shopping_cart.payment' | trans }}</h4>
+
+                <div class="row g-3">
+                    {{ form_row(orderForm.creditCardName) }}
+                    {{ form_row(orderForm.creditCardNumber) }}
+                    {{ form_row(orderForm.creditCardExpiration) }}
+                    {{ form_row(orderForm.creditCardCvv) }}
+                </div>
+
+                <hr class="my-4">
+
+                <button class="btn btn-primary btn-lg d-inline-block px-5" type="submit">
+                    {{ 'shopping_cart.send_order' | trans }}
+                </button>
+            </div>
+        {% endif %}
+
+        {% if products is not empty %}
+            {{ form_end(orderForm) }}
+        {% endif %}
+    </div>
+{% endblock %}

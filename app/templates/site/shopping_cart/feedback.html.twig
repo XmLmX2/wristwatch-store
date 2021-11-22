@@ -1,0 +1,35 @@
+{% extends 'site/base.html.twig' %}
+
+{% block title %}{{ 'shopping_cart.order_status' | trans }}{% endblock %}
+
+{% block body %}
+    <div class="container py-5 mx-auto shopping-cart">
+        <div class="col-lg-6 offset-lg-3 mt-5">
+            {% if order is null %}
+                <div class="alert alert-warning">{{ 'shopping_cart.latest_order_missing' | trans }}</div>
+            {% else %}
+                {% set paymentStatusClass = 'text-success' %}
+
+                {% if order.paymentStatus == 0 %}
+                    {% set paymentStatusClass = 'text-warning' %}
+                {% elseif order.paymentStatus == 2 %}
+                    {% set paymentStatusClass = 'text-danger' %}
+                {% endif %}
+
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="far fa-smile-beam fs-1 text-success"></i>
+                        </div>
+
+                        <h4>{{ 'shopping_cart.latest_order_message' | trans({
+                                '$orderId': order.id,
+                                '$paymentStatus': '<span class="' ~ paymentStatusClass ~ '">' ~ order.paymentStatusMapped | trans | lower ~ '</span>'
+                            }) | raw }}</h4>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

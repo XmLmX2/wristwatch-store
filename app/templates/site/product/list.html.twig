@@ -1,0 +1,134 @@
+{% extends 'site/base.html.twig' %}
+
+{% block title %}{{ 'Products' | trans }}{% endblock %}
+
+{% block body %}
+    <div class="container py-5 listing">
+        <div class="row">
+            <div class="col-lg-3">
+                <h1 class="h2 pb-4">{{ 'listing.categories' | trans }}</h1>
+                <ul class="list-unstyled templatemo-accordion">
+                    <li class="pb-3">
+                        <a class="collapsed d-flex justify-content-between h3 text-decoration-none"
+                           data-bs-toggle="collapse" href="#brandsFilter" role="button" aria-expanded="false"
+                           aria-controls="brandsFilter"
+                        >
+                            {{ 'Brand' | trans }}
+                            <i class="fa fa-fw fa-chevron-circle-down mt-1"></i>
+                        </a>
+
+                        <ul class="collapse show list-unstyled pl-3" id="brandsFilter">
+                            {% for brand in brands %}
+                                <li>
+                                    <a class="text-decoration-none {{ selectedBrand == brand ? 'fw-bold' : '' }}"
+                                       href="{{ path('product_list', {
+                                        'brand': brand.id
+                                    }) }}">{{ brand.name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                </ul>
+
+                {% if selectedBrand %}
+                    <a href="{{ path('product_list') }}" title="{{ 'listing.reset_filters' | trans }}"
+                       class="btn btn-secondary btn-sm"
+                    >
+                        {{ 'listing.reset_filters' | trans }}
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row">
+                    <div class="col-md-6 offset-md-6 pb-4">
+                        <div class="d-flex">
+                            <select class="form-control" onchange="window.location='{{ path('product_list', {
+                                'brand': selectedBrand.id ?? 0
+                            }) }}/' + this.value">
+                                {% for value, option in orderByOptions %}
+                                    <option value="{{ value }}" {{ value == selectedSoryBy ? 'selected' : '' }}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {% if products is empty %}
+                    <div class="alert alert-warning">{{ 'listing.no_products_warning' | trans }}</div>
+                {% else %}
+                    <div class="list-group shadow">
+                        {% for product in products %}
+                            {% set mainImage = 'http://via.placeholder.com/526x526' %}
+
+                            {% if product.getMainProductImage is not null and product.getMainProductImage.name is not empty %}
+                                {% set mainImage = asset(product_images_path ~ product.getMainProductImage.name) %}
+                            {% endif %}
+
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-lg-center flex-column flex-lg-row p-3">
+                                    <div class="order-2 order-lg-1 flex-fill">
+                                        <a class="mt-0 fw-bold mb-2 text-decoration-none"
+                                           href="{{ path('product', {'product': product.id}) }}"
+                                           title="{{ 'View product' | trans }}"
+                                        >
+                                            {{ product.name }}
+                                        </a>
+                                        <p class="fst-italic text-muted mb-0 fs-6">{{ product.description }}</p>
+
+                                        <div class="d-flex align-items-center justify-content-between mt-1 flex-wrap">
+                                            <div class="me-2">
+                                                <h6 class="font-weight-bold my-2">
+                                                    {{ 'Brand' | trans }}: {{ product.brand.name }}
+                                                </h6>
+
+                                                <h6 class="font-weight-bold my-2">
+                                                    {{ product.price }} {{ product.currency.name }}
+                                                </h6>
+                                            </div>
+
+                                            <form action="{{ path('shopping_cart_add_product') }}"
+                                                  class="d-flex align-items-center" method="post"
+                                            >
+                                                <input type="hidden" name="product_id" value="{{ product.id }}">
+
+                                                <ul class="quantity-input-wrapper list-inline m-0 me-2">
+                                                    <li class="list-inline-item">
+                                                        <span class="btn btn-success btn-minus">-</span>
+                                                    </li>
+
+                                                    <li class="list-inline-item">
+                                                        <input type="text" name="quantity"
+                                                               value="{{ product.shoppingCartQuantity }}"
+                                                               class="quantity-input badge bg-secondary"
+                                                        >
+                                                    </li>
+
+                                                    <li class="list-inline-item">
+                                                        <span class="btn btn-success btn-plus">+</span>
+                                                    </li>
+                                                </ul>
+
+                                                <button class="btn btn-success btn-add-to-cart btn-sm fs-6"
+                                                        type="submit">{{ 'Add to cart' | trans }}</button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <a class="mb-3 mx-auto mb-lg-0 ms-lg-5 order-1 order-lg-2 product-image"
+                                       href="{{ path('product', {'product': product.id}) }}"
+                                       title="{{ 'View product' | trans }}"
+                                    >
+                                        <img src="{{ mainImage }}" alt="Product image" class="card-img rounded-0 img-fluid">
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'site/base.html.twig' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block body %}
+    {% set mainImage = 'http://via.placeholder.com/526x526' %}
+
+    {% if product.getMainProductImage is not null and product.getMainProductImage.name is not empty %}
+        {% set mainImage = asset(product_images_path ~ product.getMainProductImage.name) %}
+    {% endif %}
+
+    <section class="bg-light">
+        <div class="container pb-5">
+            <div class="row">
+                <div class="col-lg-5 mt-5">
+                    <div class="card mb-3">
+                        <img class="card-img img-fluid" src="{{ mainImage }}" alt="Card image cap" id="product-detail">
+                    </div>
+
+                    <div class="carousel-inner product-links-wap" role="listbox">
+                        <div class="row justify-content-center">
+                            {% for image in product.productImages %}
+                                <div class="col-3">
+                                    <a href="#">
+                                        <img class="card-img img-fluid img-thumbnail my-2" alt="Product Image"
+                                             src="{{ asset(product_images_path ~ image.name) }}"
+                                        >
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <!-- col end -->
+
+                <div class="col-lg-7 mt-5">
+                    <div class="card">
+                        <div class="card-body">
+                            <h1 class="h2">{{ product.name }}</h1>
+                            <p class="h3 py-2">{{ product.price }} {{ product.currency.name }}</p>
+
+                            <ul class="list-inline">
+                                <li class="list-inline-item">
+                                    <h6>{{ 'Brand' | trans }}:</h6>
+                                </li>
+                                <li class="list-inline-item">
+                                    <p class="text-muted"><strong>{{ product.brand.name }}</strong></p>
+                                </li>
+                            </ul>
+
+                            {% if product.description is not empty %}
+                                <h6>{{ 'Description' | trans }}:</h6>
+                                <p>{{ product.description }}</p>
+                            {% endif %}
+
+                            <form action="{{ path('shopping_cart_add_product') }}" method="post"
+                                  class="quantity-input-wrapper"
+                            >
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <ul class="list-inline pb-3">
+                                            <li class="list-inline-item text-right">{{ 'Quantity' | trans }}</li>
+                                            <li class="list-inline-item">
+                                                <span class="btn btn-success btn-minus">-</span>
+                                            </li>
+
+                                            <li class="list-inline-item">
+                                                <input type="text" name="quantity"
+                                                       value="{{ product.shoppingCartQuantity }}"
+                                                       class="quantity-input badge bg-secondary"
+                                                >
+                                            </li>
+
+                                            <li class="list-inline-item">
+                                                <span class="btn btn-success btn-plus">+</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="row pb-3">
+                                    <div class="col d-grid">
+                                        <button type="submit" class="btn btn-success btn-lg" name="submit">
+                                            {{ 'Add to cart' | trans }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
